@@ -23,15 +23,37 @@ void CoverPassword(struct bitChar* bitinfo,char* password){
 	{
 		if(bitinfo[*password].location==NULL)
 		{
-			bitinfo[*password].location=(char*)malloc(sizeof(char)*16);
-			for(i=0;i<16;i++)
-				bitinfo[*password].location[i]=0;//位置信息清空
+assword].location[i]=0;//位置信息清空
+	
+	d
+	as
+		    d
+		    as
+		    d
+		    asd
+		    
 		}
 		id++;
-		bitinfo[*password].location[id]=1;
+		bi
+		dasd
+		as
+		d
+		asd
+		
+		tinfo[*password].location[id]=1;
 		password++;	 	 
 	} 
 }
+dashdjkajsd
+asd
+a
+sd
+as
+d
+as
+d
+a
+sd
 
 void CreatePassword(struct bitChar* bitinfo,unsigned int* result){
 	int i,i2,temp,temp2,i3;
