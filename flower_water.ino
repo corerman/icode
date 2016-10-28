@@ -16,6 +16,8 @@ int d3 = 10;
 int d2 = 11;
 int d1 = 12;
 
+ int qian,bai,shi,ge;
+
 //定义湿度上限
 int wetTopLevel=850;  //湿度的上限，这里的上限代表很干燥
 int wetLowLevel=650; //湿度的下限
@@ -23,14 +25,15 @@ int waterTime=5000; //浇水的时间
 int num;  //实时湿度读取变量
 
 //设计loopCheckTime everyLoopTime commonDelay 和 showNumTime是考虑避免多线程 ，原理是 总的监测时间除以一次LOOP的大概总时间 赋值为count_top ，每次LOOP循环则把currentCount+1，如果currentCount大于count_top 则执行湿度监测
-int loopCheckTime=30*60;//这是30分钟的监测时间 
-int everyLoopTime=0; //Loop函数的大概总时间 在loop函数开始出初始计算获得
-int commonDelay=1000; //公共等待时间 用于调整总等待毫秒数
-int showNumTime=250;
-int count_top=0;
-int currentCount=0;
+unsigned long loopCheckTime=30*60;//这是30分钟的监测时间  
+long everyLoopTime=0; //Loop函数的大概总时间 在loop函数开始出初始计算获得
+int commonDelay=0; //公共等待时间 用于调整总等待毫秒数
+int showNumTime=5;
+long count_top=0;
+long currentCount=0;
 void setup() {
   //初始化引脚
+  //Serial.begin(9600);
   pinMode(d1, OUTPUT);
   pinMode(d2, OUTPUT);
   pinMode(d3, OUTPUT);
@@ -46,10 +49,16 @@ void setup() {
 }
 
 
-
+int firstFlag=1; //设置firstFlag 变量 是为了标志系统的的初始化 
 void loop() {
-   everyLoopTime=(commonDelay+showNumTime*4)/1000; //算出每次系统循环所消耗的总时间 单位为秒
+  if(firstFlag==1)  
+  {
+   loopCheckTime=loopCheckTime*1000; //把检测等待时间转换为毫秒单位
+   firstFlag++;
+  }
+   everyLoopTime=commonDelay+showNumTime*4; //算出每次系统循环所消耗的总时间 单位为毫秒
    count_top=loopCheckTime/everyLoopTime; //算出Loop计数上限值
+  // Serial.println(currentCount);
    num=analogRead(WetPoint); //首先需要读取湿度
    divNumAndLight(num,showNumTime); //显示湿度数值
    currentCount=currentCount+1;
@@ -75,7 +84,7 @@ void loop() {
           currentCount=1; //赋值为1就避免了第二个if 避免两次浇水
         }   
     }
-  delay(commonDelay);  //公共等待时间  用于凑整调优系统运行时间
+  //delay(commonDelay);  //公共等待时间  用于凑整调优系统运行时间
 }
 
 void pickDigit(int x)  //定义pickDigit(x),其作用是开启dx端口 指定使用哪个数码管
@@ -102,36 +111,31 @@ void pickDigit(int x)  //定义pickDigit(x),其作用是开启dx端口 指定使
 }
 
 void divNumAndLight(int num,int delaytime){
-    int qian,bai,shi,ge;
+
     qian=num/1000;
     bai=(num/100)%10;
     shi=(num%100)/10;
     ge=num%10;
-
-    digitalWrite(d1, HIGH);
-    digitalWrite(d2, HIGH);
-    digitalWrite(d3, HIGH);
-    digitalWrite(d4, HIGH);
-
-     digitalWrite(d1, LOW); //先让第一个亮 
+    ge=0;
+      clearLEDs();
+      pickDigit(1);
       showNum(qian);
-      delay(delaytime);
-    digitalWrite(d1, HIGH);
+      delayMicroseconds(delaytime*1000);
 
-     digitalWrite(d2, LOW); 
+      clearLEDs();
+      pickDigit(2);
       showNum(bai);
-      delay(delaytime);
-    digitalWrite(d2, HIGH);    
+      delayMicroseconds(delaytime*1000);
 
-     digitalWrite(d3, LOW); 
+      clearLEDs();
+      pickDigit(3);
       showNum(shi);
-      delay(delaytime);
-    digitalWrite(d3, HIGH);     
+      delayMicroseconds(delaytime*1000);
 
-      digitalWrite(d4, LOW); 
+      clearLEDs();
+      pickDigit(4);
       showNum(ge);
-      delay(delaytime);
-    digitalWrite(d4, HIGH);       
+      delayMicroseconds(delaytime*1000);
   }
 
 
@@ -231,3 +235,15 @@ void divNumAndLight(int num,int delaytime){
           break;
     }   
   }
+
+
+  void clearLEDs()  //清屏
+{
+  digitalWrite(a, LOW);
+  digitalWrite(b, HIGH);
+  digitalWrite(c, HIGH);
+  digitalWrite(d, HIGH);
+  digitalWrite(e, HIGH);
+  digitalWrite(f, HIGH);
+  digitalWrite(g, HIGH);
+}
