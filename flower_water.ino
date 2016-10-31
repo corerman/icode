@@ -25,7 +25,7 @@ int waterTime=5000; //浇水的时间
 int num;  //实时湿度读取变量
 
 //设计loopCheckTime everyLoopTime commonDelay 和 showNumTime是考虑避免多线程 ，原理是 总的监测时间除以一次LOOP的大概总时间 赋值为count_top ，每次LOOP循环则把currentCount+1，如果currentCount大于count_top 则执行湿度监测
-unsigned long loopCheckTime=30*60;//这是30分钟的监测时间  
+unsigned long loopCheckTime=1*60;//这是1分钟的监测时间  
 long everyLoopTime=0; //Loop函数的大概总时间 在loop函数开始出初始计算获得
 int commonDelay=0; //公共等待时间 用于调整总等待毫秒数
 int showNumTime=5;
@@ -53,8 +53,14 @@ int firstFlag=1; //设置firstFlag 变量 是为了标志系统的的初始化
 void loop() {
   if(firstFlag==1)  
   {
+    if(num<=wetLowLevel)  //如果湿度已经远远超过湿度下限 就立即停止抽水
+    {
+        //停止抽水
+        digitalWrite(jidianqi,HIGH);  
+        //响蜂鸣器
+    }
    loopCheckTime=loopCheckTime*1000; //把检测等待时间转换为毫秒单位
-   firstFlag++;
+   firstFlag++; 
   }
    everyLoopTime=commonDelay+showNumTime*4; //算出每次系统循环所消耗的总时间 单位为毫秒
    count_top=loopCheckTime/everyLoopTime; //算出Loop计数上限值
@@ -62,12 +68,7 @@ void loop() {
    num=analogRead(WetPoint); //首先需要读取湿度
    divNumAndLight(num,showNumTime); //显示湿度数值
    currentCount=currentCount+1;
-    if(num<=wetLowLevel)  //如果湿度已经远远超过湿度下限 就立即停止抽水
-    {
-        //停止抽水
-        digitalWrite(jidianqi,HIGH);  
-        //响蜂鸣器
-    }
+
     if(num>=wetTopLevel && currentCount==1) //如果湿度数值高于湿度上限 而且是第一次 就立即抽5秒水
     {
         digitalWrite(jidianqi,LOW); //抽水
@@ -76,7 +77,13 @@ void loop() {
     }
     if(currentCount>=count_top) //现在系统已经循环超过了浇水监测时间【默认是30分钟】
     {
-       if(num>=wetTopLevel) 
+      if(num<=wetLowLevel)  //如果湿度已经远远超过湿度下限 就立即停止抽水
+      {
+          //停止抽水
+          digitalWrite(jidianqi,HIGH);  
+          //响蜂鸣器
+          currentCount=count_top+10;//这也就是避免无休止的递加 导致溢出异常
+      }else if(num>=wetTopLevel) //如果湿度已经超过湿度上限
        {
           digitalWrite(jidianqi,LOW); //抽水
           delay(waterTime);
