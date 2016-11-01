@@ -2,7 +2,7 @@
 #define jidianqi 13
 
 
-//设置阴极接口
+//设置每个数码管的灯管控制
 int a = 1;
 int b = 2;
 int c = 3;
@@ -10,7 +10,7 @@ int d = 4;
 int e = 5;
 int f = 6;
 int g = 7;
-//设置阳极接口
+//设置数码管控制接口
 int d4 = 9;
 int d3 = 10;
 int d2 = 11;
@@ -51,24 +51,23 @@ void setup() {
 
 int firstFlag=1; //设置firstFlag 变量 是为了标志系统的的初始化 
 void loop() {
-  if(firstFlag==1)  
+  if(firstFlag==1)  //如果当前是arduino首次启动的状态 
   {
-    if(num<=wetLowLevel)  //如果湿度已经远远超过湿度下限 就立即停止抽水
+    if(num<=wetLowLevel)  //如果湿度已经低于湿度下限 就立即停止抽水
     {
         //停止抽水
         digitalWrite(jidianqi,HIGH);  
         //响蜂鸣器
     }
-   loopCheckTime=loopCheckTime*1000; //把检测等待时间转换为毫秒单位
+   loopCheckTime=loopCheckTime*1000; //把检测等待时间转换为毫秒单位 只需要一次计算即可 所以放在此处
    firstFlag++; 
   }
    everyLoopTime=commonDelay+showNumTime*4; //算出每次系统循环所消耗的总时间 单位为毫秒
-   count_top=loopCheckTime/everyLoopTime; //算出Loop计数上限值
-  // Serial.println(currentCount);
-   num=analogRead(WetPoint); //首先需要读取湿度
-   divNumAndLight(num,showNumTime); //显示湿度数值
+   count_top=loopCheckTime/everyLoopTime; //算出循环计数的上限值
+   num=analogRead(WetPoint); //读取湿度的数值
+   divNumAndLight(num,showNumTime); //拆分数字的每一位，并显示湿度数值到四位数码管
+ 
    currentCount=currentCount+1;
-
     if(num>=wetTopLevel && currentCount==1) //如果湿度数值高于湿度上限 而且是第一次 就立即抽5秒水
     {
         digitalWrite(jidianqi,LOW); //抽水
@@ -77,24 +76,24 @@ void loop() {
     }
     if(currentCount>=count_top) //现在系统已经循环超过了浇水监测时间【默认是30分钟】
     {
-      if(num<=wetLowLevel)  //如果湿度已经远远超过湿度下限 就立即停止抽水
+      if(num<=wetLowLevel)  //如果湿度已经低于湿度下限 就立即停止抽水
       {
           //停止抽水
           digitalWrite(jidianqi,HIGH);  
           //响蜂鸣器
-          currentCount=count_top+10;//这也就是避免无休止的递加 导致溢出异常
+          currentCount=count_top+10;//此处的计算是为了避免【高速的loop循环导致无休止的递加从而可能引发的溢出异常】
       }else if(num>=wetTopLevel) //如果湿度已经超过湿度上限
        {
           digitalWrite(jidianqi,LOW); //抽水
           delay(waterTime);
           digitalWrite(jidianqi,HIGH);//停止抽水
-          currentCount=1; //赋值为1就避免了第二个if 避免两次浇水
+          currentCount=2; //赋值为1就避免了第二个if 避免两次浇水
         }   
     }
-  //delay(commonDelay);  //公共等待时间  用于凑整调优系统运行时间
+  //delay(commonDelay);  //公共等待时间，目的是用于凑整调优系统运行时间，但是如果开启此处使用会导致数码管显示的视觉异常【数码管会不停闪烁】
 }
 
-void pickDigit(int x)  //定义pickDigit(x),其作用是开启dx端口 指定使用哪个数码管
+void pickDigit(int x)  //定义pickDigit(x),其作用是指定使用哪个数码管
 {
   digitalWrite(d1, HIGH);
   digitalWrite(d2, HIGH);
@@ -127,7 +126,7 @@ void divNumAndLight(int num,int delaytime){
       clearLEDs();
       pickDigit(1);
       showNum(qian);
-      delayMicroseconds(delaytime*1000);
+      delayMicroseconds(delaytime*1000); //此处的单位是微秒 时间很短产生视觉停留
 
       clearLEDs();
       pickDigit(2);
